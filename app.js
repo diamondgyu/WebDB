@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
-const router =  express.Router();
+
+// Set MySQL connection
 const mysql = require('mysql2');
 const db_info = {
     host: 'localhost',
@@ -13,40 +14,62 @@ const db_info = {
 const sql_connection = mysql.createConnection(db_info);
 sql_connection.connect();
 
-sql_connection.query("select * from testtable WHERE student_number=21", (err, result, fields) => {
+sql_connection.query("select * from testtable", (err, result, fields) => {
     if(err) throw err;
     if(result.length > 0) {
         console.log(result);    
     }
 })
 
-app.use("/", router);
-
-router.route("/").get((req, res) => {
-    res.render("app");
-})
-
+// Set EJS engine
 app.set("view engine", "ejs");
-app.set("views", "./views");  
+app.set("views", "./views"); 
+
+// Use BodyParser
+app.use(express.json());
+app.use(express.urlencoded({extended:true}));
 
 app.get("/", (req, res) => {
-    res.render("app");
+    res.render('app');
 })
 
 app.get("/login", (req, res) => {
-    res.render("login");
+    res.render('login');
 })
 
 app.post("/login", (req, res) => {
-    res.send("Login Attempt made");
+    const {userID, userPassword} = req.body;
+    sql_connection.query("select * from testtable where name=? and student_number=?", [userID, userPassword], (err, result, fields) => {
+        if(err) throw err;
+        if(result.length > 0) {
+            console.log(result);
+            res.send("Login success");
+        }
+        else {
+            res.render("login", {loginResult:"failed"});
+        }
+    })
 })
 
 app.get("/signup", (req, res) => {
-    res.send("Sign-up Page");
+    res.render('signup');
 })
-
 app.post("/signup", (req, res) => {
-    res.send("Signup Attempt made");
+    const {userID, userPassword} = req.body;
+    // console.log(userID, userPassword);
+    sql_connection.query("select * from testtable where name=?", [userID], (err, result, fields) => {
+        if(err) throw err;
+        if(result.length > 0) {
+            console.log(result);
+            res.send("ID already exists");
+        }
+        else {
+            sql_connection.query("insert into testtable(name, student_number) values(?, ?)", [userID, userPassword], (err, result, fields) => {
+                if(err) throw err;
+                res.send("Sign up success");
+            })
+        }
+    })
 })
 
 app.listen(3000, () => {
