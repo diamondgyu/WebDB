@@ -5,25 +5,81 @@
     <title>Sign in page</title>
 </head>
 <body>
+
     <h1>회원가입</h1>
-    <form method="post">
-        <table>
-            <tr>
-                <td><label>아이디</label></td>
-                <td>
-                    <label>
-                        <input type="text" name="userID">
-                    </label>
-                </td>
-                <td><label>비밀번호</label></td>
-                <td>
-                    <label>
-                        <input type="text" name="userPassword">
-                    </label>
-                </td>
-            </tr>
-        </table>
-        <td><input type="submit" value="회원가입" name=""></td>
-    </form>
+    <table>
+        <tr>
+            <td><label>아이디</label></td>
+            <td>
+                <label>
+                    <input type="text" name="userID">
+                </label>
+            </td>
+            <td><label>비밀번호</label></td>
+            <td>
+                <label>
+                    <input type="text" name="userPassword">
+                </label>
+            </td>
+        </tr>
+    </table>
+    <!-- <td><input type="submit" value="회원가입" name=""></td> -->
+    <button id="signup">회원가입</button>
+    <script>
+
+        document.getElementById('signup').addEventListener('click', () => {
+            if (document.getElementsByName('userID')[0].value == "" || document.getElementsByName('userPassword')[0].value == "")
+            {
+                alert("Please fill in every blanks.")
+                return;
+            }
+            fetch('http://localhost:3000/api/checkIDExists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: document.getElementsByName('userID')[0].value,
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.result) 
+                {
+                    alert(data.verbose)
+                }
+                else
+                {
+                    signup();
+                    window.location = 'http://localhost:3000/login';
+                }
+            })
+        })
+
+        function signup() { 
+            fetch('http://localhost:3000/api/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: document.getElementsByName('userID')[0].value,
+                    password: document.getElementsByName('userPassword')[0].value
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.result) 
+                {
+                    alert(data.verbose)
+                    window.location = 'http://localhost:3000/login';
+                }
+                else
+                {
+                    alert(data.verbose);
+                }
+            })
+        }
+    </script>
 </body>
 </html>

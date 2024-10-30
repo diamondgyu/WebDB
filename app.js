@@ -1,4 +1,6 @@
 const express = require('express');
+const session = require('express-session');
+const flash = require('connect-flash');
 const app = express();
 
 // Set MySQL connection
@@ -8,18 +10,36 @@ const db_info = {
     port: '3306',
     user: 'root',
     password: '1234',
-    database: 'db_test'
+    database: 'db_2021083681'
 };
 
 const sql_connection = mysql.createConnection(db_info);
 sql_connection.connect();
 
-sql_connection.query("select * from testtable", (err, result, fields) => {
+sql_connection.query("delete from User where ID = 'undefined' or ID = ''", (err, result, fields) => {});
+
+sql_connection.query("select * from User", (err, result, fields) => {
     if(err) throw err;
     if(result.length > 0) {
-        console.log(result);    
+        console.log(result);
     }
 })
+
+// Express session
+app.use(session({
+    secret: 'your secret key',
+    resave: false,
+    saveUninitialized: false
+  }));
+
+// Flash
+app.use(flash());
+
+// set messages
+app.use((req, res, next) => {
+    res.locals.messages = req.flash();
+    next();
+  });
 
 // Set EJS engine
 app.set("view engine", "ejs");
@@ -37,40 +57,73 @@ app.get("/login", (req, res) => {
     res.render('login');
 })
 
-app.post("/login", (req, res) => {
-    const {userID, userPassword} = req.body;
-    sql_connection.query("select * from testtable where name=? and student_number=?", [userID, userPassword], (err, result, fields) => {
+app.get("/signup", (req, res) => {
+    res.render('signup');
+})
+
+app.get("/list", (req, res) => {
+    res.render('list', {stockData:[]});
+})
+
+app.get("/getStocks", (req, res) => {
+    sql_connection.query("select * from Stock", (err, result, fields) => {
+        if(err) throw err;
+        res.send(result);
+    })
+})
+
+app.post("/api/user", (req, res) => {
+    const ID = req.body.ID;
+    const password = req.body.password;
+
+    sql_connection.query(`select * from User where ID = '${ID}' and password = '${password}'`, (err, result, fields) => {
         if(err) throw err;
         if(result.length > 0) {
-            console.log(result);
-            res.send("Login success");
-        }
-        else {
-            res.render("login", {loginResult:"failed"});
+            res.send({result:true, data:result});
+        } else {
+            res.send({result:false, data:{}});
         }
     })
 })
 
-app.get("/signup", (req, res) => {
-    res.render('signup');
-})
-app.post("/signup", (req, res) => {
-    const {userID, userPassword} = req.body;
-    // console.log(userID, userPassword);
-    sql_connection.query("select * from testtable where name=?", [userID], (err, result, fields) => {
+app.post("/api/checkIDExists", (req, res) => {
+    const ID = req.body.ID;
+
+    sql_connection.query(`select * from User where ID = '${ID}'`, (err, result, fields) => {
         if(err) throw err;
+        console.log(result);
+        console.log(result.length)
         if(result.length > 0) {
-            console.log(result);
-            res.send("ID already exists");
-        }
-        else {
-            sql_connection.query("insert into testtable(name, student_number) values(?, ?)", [userID, userPassword], (err, result, fields) => {
-                if(err) throw err;
-                res.send("Sign up success");
-            })
+            console.log(result.length)
+            res.send({result:true, verbose:"ID already exists."});
+        } else {
+            res.send({result:false, verbose:"ID does not exist."});
         }
     })
 })
+
+app.post("/api/signup", (req, res) => {
+    const ID = req.body.ID;
+    const password = req.body.password;
+
+    sql_connection.query(`insert into User (ID, password, deposit) values ('${ID}', '${password}', 0)`, (err, result, fields) => {
+        if(err) throw err;
+        if(result.affectedRows > 0) {
+            res.send({result:true, verbose:"Sign-up succeeded."});
+        } else {
+            res.send({result:false, verbose:"Failed to sign-up."});
+        }
+    })
+})
+
+app.post("/api/list", (req, res) => {
+    res.send({result:true, data:[]});
+})
+
+app.post("/api/stock", (req, res) => {
+    res.send({result:true, data:[]});
+})
+
 
 app.listen(3000, () => {
     console.log('Server is online');
