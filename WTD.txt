@@ -1,0 +1,22 @@
+Milestones
+
+** CHanges from M1
+- TIMESTAMP -> INT
+
+Completed
+1. Log in
+2. Sign up
+3. Stock UI
+
+Ongoing
+stock trade window:
+    1. Make trade (limit, maker)
+    2. Show orderbook
+
+Leftovers
+My page:
+    1. Showing the trade history
+    2. Show inventory
+    2. Show deposit
+
+IMPORTANT: trading!

@@ -2,38 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Pretendard-Light';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Light.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Pretendard-Bold';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        body {
+            margin-left: 80px;
+            margin-right: 80px;
+            font-family: Pretendard;
+            background-color: #1a1a1a;
+            color: #fff;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: Pretendard-Bold;
+        }
+
+        .button {
+            font-family: Pretendard-Bold;
+            background-color: #0191F2;
+            border-radius: 4px;
+            border: none;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block   ;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            width: 322px;
+        }
+
+        .button:hover {
+            background-color: #017ACC;
+        }
+
+        .login-container {
+            background-color: #1a1a1a;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -240px;
+            margin-left: -200px;
+            width: 330px;
+            height: 400px;
+        }
+
+        .label {
+            font-family: Pretendard-Bold;
+            text-align: bottom;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        #signup {
+            color: #017ACC;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        #signup:hover {
+            color: #0191F2;
+        }
+
+        .input {
+            background-color: #1a1a1a;
+            color: #fff;
+            border-radius: 4px;
+            border-width: 0.5px;
+            padding: 10px;
+            box-shadow: none;
+            border: 1px solid #ccc;
+            border-color: #ccc;
+            outline: none;
+            height: 25px;
+            width: 300px;
+            transition: border-color 0.2s ease-in-out;
+            margin-bottom: 20px;
+        }
+
+        .input:focus {
+            border-color: #0191F2;
+        }
+
+        .input:hover {
+            border-color: #0191F2;
+        }
+    </style>
     <title>Login page</title>
 </head>
 <body>
-
-     
-
-    <h1>로그인</h1>
-    <div>
-        <table>
+    <div class="login-container">
+        <h1>Welcome</h1>
+        <table> 
             <tr>
-                <td><label>아이디</label></td>
-                <td>
-                    <label>
-                        <input type="text" name="userID">
-                    </label>
-                </td>
-                <td><label>비밀번호</label></td>
-                <td>
-                    <label>
-                        <input type="text" name="userPassword">
-                    </label>
-                </td>
-                
+                <td><label class="label">ID</label></td>
             </tr>
-            
+            <tr>
+                <td><input class="input" type="text" name="userID", ></td>
+            </tr>
+            <tr><p></p></tr>
+            <tr>
+                <td><label class="label">Password</label></td>
+            </tr>
+            <tr>
+                <td><input class="input" type="password" name="userPassword"></td>
+            </tr>
+            <tr></tr>
+            <tr>
+                <td><button class="button" id="submitBtn">Log in</button></td>
+            </tr>
+            <tr>
+                <td><p id='signup' onclick="window.location='/signup'">Create Account</button></td>
+            </tr>
         </table>
     </div>
-
-    <button id="submitBtn">로그인</button>
-
-    <button onclick="signup()", id="signup", name="">회원가입</button>
-
+    
     <script>
         function signup() {
             console.log("Signup button clicked");
@@ -68,7 +175,8 @@
                     alert('ID or password is wrong');
                 }
                 else {
-                    sessionStorage.setItem("ID", data.ID);
+                    // console.log(data["data"][0]["ID"]);
+                    sessionStorage.setItem("ID", data["data"][0]["ID"]);
                     window.location = 'http://localhost:3000/list';
                 }
             })

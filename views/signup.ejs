@@ -2,29 +2,132 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Pretendard-Bold';
+            src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        h1 {
+            font-family: Pretendard-Bold;
+        }
+
+        .login-container {
+            background-color: #1a1a1a;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -240px;
+            margin-left: -200px;
+            width: 330px;
+            height: 400px;
+        }
+
+        body {
+            margin-left: 80px;
+            margin-right: 80px;
+            font-family: Pretendard;
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+
+        .button {
+            font-family: Pretendard-Bold;
+            background-color: #0191F2;
+            border-radius: 4px;
+            border: none;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block   ;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            width: 322px;
+        }
+
+        .button:hover {
+            background-color: #017ACC;
+        }
+
+        .input {
+            background-color: #1a1a1a;
+            color: #fff;
+            border-radius: 4px;
+            border-width: 0.5px;
+            padding: 10px;
+            box-shadow: none;
+            border: 1px solid #ccc;
+            border-color: #ccc;
+            outline: none;
+            height: 25px;
+            width: 300px;
+            transition: border-color 0.2s ease-in-out;
+            margin-bottom: 20px;
+        }
+
+        .label {
+            font-family: Pretendard-Bold;
+            text-align: bottom;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .input:focus {
+            border-color: #0191F2;
+        }
+
+        .input:hover {
+            border-color: #0191F2;
+        }
+    </style>
     <title>Sign in page</title>
 </head>
 <body>
-
-    <h1>회원가입</h1>
+    <div class="login-container">
+    <h1>Sign up</h1>
     <table>
         <tr>
-            <td><label>아이디</label></td>
+            <td><label class="label">ID</label></td>
+        </tr>
+        <tr>
             <td>
                 <label>
-                    <input type="text" name="userID">
-                </label>
-            </td>
-            <td><label>비밀번호</label></td>
-            <td>
-                <label>
-                    <input type="text" name="userPassword">
+                    <input class="input" type="text" name="userID">
                 </label>
             </td>
         </tr>
+        <tr>
+            <td><label class="label">Password</label></td>
+        </tr>
+        <tr>
+            <td>
+                <label>
+                    <input class="input" type="text" name="userPassword">
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td><button id="signup" class="button">Sign up</button></td>
+        </tr>
     </table>
     <!-- <td><input type="submit" value="회원가입" name=""></td> -->
-    <button id="signup">회원가입</button>
+    
+    </div>
     <script>
 
         document.getElementById('signup').addEventListener('click', () => {
@@ -51,7 +154,7 @@
                 else
                 {
                     signup();
-                    window.location = 'http://localhost:3000/login';
+                    //window.location = 'http://localhost:3000/login';
                 }
             })
         })
@@ -69,6 +172,7 @@
             })
             .then(res => res.json())
             .then(data => {
+                console.log(data)
                 if (data.result) 
                 {
                     alert(data.verbose)

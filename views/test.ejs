@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Table</title>
+</head>
+<body>
+    <button class="button" onclick="handleClick()">GO</button>
+    <script>
+        function handleClick() {
+            console.log("Button clicked");
+            fetch("http://localhost:3000/api/makeOrder", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ID: "test",
+                    stock_code: "AAPL",
+                    stock_price: 220,
+                    stock_quantity: 10,
+                    type: "limit",
+                    side: "buy"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            });
+        }
+    </script>
+</body>
+</html>

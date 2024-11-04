@@ -38,7 +38,7 @@ CREATE TABLE FilledTrade (
     trade_side VARCHAR(10) NOT NULL,
     trade_price DECIMAL(10, 2) NOT NULL,
     trade_quantity INT NOT NULL,
-    trade_unix_time TIMESTAMP NOT NULL,
+    trade_unix_time BIGINT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(ID),
     FOREIGN KEY (stock_code) REFERENCES Stock(code)
 );
@@ -50,7 +50,7 @@ CREATE TABLE UnfilledTrade (
     trade_side VARCHAR(10) NOT NULL,
     trade_price DECIMAL(10, 2) NOT NULL,
     trade_quantity INT NOT NULL,
-    trade_unix_time TIMESTAMP NOT NULL,
+    trade_unix_time BIGINT NOT NULL,
     trade_filled INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(ID),
     FOREIGN KEY (stock_code) REFERENCES Stock(code)

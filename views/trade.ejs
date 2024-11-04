@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+            @font-face {
+                font-family: 'Pretendard';
+                src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+                font-weight: 400;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: 'Pretendard-Light';
+                src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Light.woff') format('woff');
+                font-weight: 400;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: 'Pretendard-Bold';
+                src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+                font-weight: 400;
+                font-style: normal;
+            }
+    
+            body {
+                margin-left: 80px;
+                margin-right: 80px;
+                font-family: Pretendard;
+                background-color: #1a1a1a;
+                color: #fff;
+            }
+
+            h2 {
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="ID"></h1>
+        <h2>Orderbook</h2>
+        <div id="quotes"></div>
+        <h2>Trade</h2>
+        <div>
+            <label for="buyCheckbox">Limit</label>
+            <input type="radio" id="limitCheckbox" name="tradeType" checked="checked"/>
+            <label for="sellCheckbox">Market</label>
+            <input type="radio" id="marketCheckbox" name="tradeType"/>
+        </div>
+        
+
+        <input id="priceInput" type="text" placeholder="Trade price" value="220.3"/>
+        <input id="quantityInput" type="text" placeholder="Trade amount" value="1" />
+        <button id="buyBtn" class="button", onclick="buyBtn()">Buy</button>
+        <button id="sellBtn" class="button", onclick="sellBtn()">Sell</button>
+
+
+        <script>
+            console.log(sessionStorage.getItem("stockCode"));
+            document.getElementById("ID").innerText = "Trade " + sessionStorage.getItem("stockCode");
+
+            
+
+            // draw orderbook
+
+
+        </script>
+
+        <script>
+            function buyBtn() {
+                console.log("Buy button clicked");
+                // get the radio value
+                var orderType;
+                document.getElementById("limitCheckbox").checked ? console.log("Limit") : console.log("Market");
+                document.getElementById("limitCheckbox").checked ? orderType = "limit" : orderType = "market";
+                
+                fetch('http://localhost:3000/api/makeOrder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ID: sessionStorage.getItem("ID"),
+                        stockCode: sessionStorage.getItem("stockCode"),
+                        price: document.getElementById("priceInput").value,
+                        quantity: document.getElementById("quantityInput").value,
+                        type: orderType,
+                        side: "buy"
+                    })
+                }).then(res => res.json())
+                .then(data => {
+                    console.log(data)
+                })
+            }
+
+            function sellBtn() {
+                console.log("Sell button clicked");
+                // get the radio value
+                var orderType;
+                document.getElementById("limitCheckbox").checked ? console.log("Limit") : console.log("Market");
+                document.getElementById("limitCheckbox").checked ? orderType = "limit" : orderType = "market";
+                
+                fetch('http://localhost:3000/api/makeOrder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ID: sessionStorage.getItem("ID"),
+                        stockCode: sessionStorage.getItem("stockCode"),
+                        price: document.getElementById("priceInput").value,
+                        quantity: document.getElementById("quantityInput").value,
+                        type: orderType,
+                        side: "sell"
+                    })
+                }).then(res => res.json())
+                .then(data => {
+                    console.log(data)
+                })
+            }
+
+            // Function to organize quotes into an orderbook
+            function createOrderbook(orders) {
+                const buyOrders = {};
+                const sellOrders = {};
+                
+                console.log("orders");
+                console.log(orders);
+
+                orders.forEach(quote => {
+                    const price = parseFloat(quote["trade_price"]);
+                    const quantity = parseInt(quote["trade_quantity"]);
+                    
+                    // console.log(quote);
+                    // console.log(price, quantity);
+
+                    if (quote["trade_side"] === 'buy') {
+                        buyOrders[price] = (buyOrders[price] || 0) + quantity;
+                    } else if (quote["trade_side"] === 'sell') {
+                        sellOrders[price] = (sellOrders[price] || 0) + quantity;
+                    }
+                });
+                
+                var buys = Object.entries(buyOrders).sort((a, b) => parseFloat(a[0]) - parseFloat(b[0])).slice(0, 5);
+                const buy_book = Object.fromEntries(
+                    buys.map(([price, quantity]) => [parseFloat(price), quantity])
+                );
+                var sells = Object.entries(sellOrders).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).slice(0, 5);
+                const sell_book = Object.fromEntries(
+                    sells.map(([price, quantity]) => [parseFloat(price), quantity])
+                );
+                console.log("buyOrders");
+                console.log(buys);
+                console.log(buyOrders);
+                console.log(buy_book);
+
+                console.log("sellOrders");
+                console.log(sells);
+                console.log(sellOrders);
+                console.log(sell_book)
+
+                return { buyOrders, sellOrders };
+            }
+
+            
+
+
+            // Function to render the orderbook
+            function renderOrderbook(orderbook) {
+                const quotesDiv = document.getElementById('quotes');
+                const table = document.createElement('table');
+
+                table.style.width = '300px';
+                
+                // Create table header
+                const header = table.createTHead();
+                const headerRow = header.insertRow();
+                ['Buy Quotes', 'Price', 'Sell Quotes'].forEach(text => {
+                    const th = document.createElement('th');
+                    th.textContent = text;
+                    th.style.textAlign = 'center';
+                    th.width = '100px'
+                    headerRow.appendChild(th);
+                });
+
+                // Create table body
+                const body = table.createTBody();
+
+                // Combine and sort all prices
+                const allPrices = [...new Set([...Object.keys(orderbook.buyOrders), ...Object.keys(orderbook.sellOrders)])].sort((a, b) => b - a);
+
+                allPrices.forEach(price => {
+                    const row = body.insertRow();
+                    row.style.width = '300px';
+                    const buyQuantity = orderbook.buyOrders[price] || '';
+                    const sellQuantity = orderbook.sellOrders[price] || '';
+
+                    const buyCell = row.insertCell();
+                    buyCell.style.width = '100px';
+                    buyCell.style.textAlign = 'center';
+                    buyCell.textContent = buyQuantity;
+                    buyCell.className = 'buy';
+
+                    const priceCell = row.insertCell();
+                    priceCell.style.width = '100px';
+                    priceCell.style.textAlign = 'center';
+                    priceCell.textContent = price;
+
+                    const sellCell = row.insertCell();
+                    sellCell.style.width = '100px';
+                    sellCell.style.textAlign = 'center';
+                    sellCell.textContent = sellQuantity;
+                    sellCell.className = 'sell';
+                });
+
+                quotesDiv.appendChild(table);
+            }
+
+            // Main function to fetch data and render orderbook
+            async function displayOrderbook() {
+
+                let orderbook;
+                fetch('http://localhost:3000/api/getOrderbook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        stockCode: sessionStorage.getItem("stockCode")
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const orders = data
+                    console.log(orders)
+                    orderbook = createOrderbook(orders);
+                    renderOrderbook(orderbook);
+                })
+
+                
+            }
+
+            // Call the main function when the page loads
+            window.onload = displayOrderbook;
+        </script>
+    </body>
+</html>
