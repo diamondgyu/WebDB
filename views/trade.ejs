@@ -116,55 +116,10 @@
                     console.log(data)
                 })
             }
-
-            // Function to organize quotes into an orderbook
-            function createOrderbook(orders) {
-                const buyOrders = {};
-                const sellOrders = {};
-                
-                console.log("orders");
-                console.log(orders);
-
-                orders.forEach(quote => {
-                    const price = parseFloat(quote["trade_price"]);
-                    const quantity = parseInt(quote["trade_quantity"]);
-                    
-                    // console.log(quote);
-                    // console.log(price, quantity);
-
-                    if (quote["trade_side"] === 'buy') {
-                        buyOrders[price] = (buyOrders[price] || 0) + quantity;
-                    } else if (quote["trade_side"] === 'sell') {
-                        sellOrders[price] = (sellOrders[price] || 0) + quantity;
-                    }
-                });
-                
-                var buys = Object.entries(buyOrders).sort((a, b) => parseFloat(a[0]) - parseFloat(b[0])).slice(0, 5);
-                const buy_book = Object.fromEntries(
-                    buys.map(([price, quantity]) => [parseFloat(price), quantity])
-                );
-                var sells = Object.entries(sellOrders).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).slice(0, 5);
-                const sell_book = Object.fromEntries(
-                    sells.map(([price, quantity]) => [parseFloat(price), quantity])
-                );
-                console.log("buyOrders");
-                console.log(buys);
-                console.log(buyOrders);
-                console.log(buy_book);
-
-                console.log("sellOrders");
-                console.log(sells);
-                console.log(sellOrders);
-                console.log(sell_book)
-
-                return { buyOrders, sellOrders };
-            }
-
             
-
-
             // Function to render the orderbook
             function renderOrderbook(orderbook) {
+                // console.log(orderbook);
                 const quotesDiv = document.getElementById('quotes');
                 const table = document.createElement('table');
 
@@ -229,9 +184,8 @@
                 })
                 .then(res => res.json())
                 .then(data => {
-                    const orders = data
-                    console.log(orders)
-                    orderbook = createOrderbook(orders);
+                    const orderbook = data
+                    console.log(orderbook)
                     renderOrderbook(orderbook);
                 })
 
