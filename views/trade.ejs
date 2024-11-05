@@ -42,6 +42,9 @@
         <div>
             <label for="buyCheckbox">Limit</label>
             <input type="radio" id="limitCheckbox" name="tradeType" checked="checked"/>
+        </div>
+
+        <div>
             <label for="sellCheckbox">Market</label>
             <input type="radio" id="marketCheckbox" name="tradeType"/>
         </div>
@@ -88,6 +91,8 @@
                 }).then(res => res.json())
                 .then(data => {
                     console.log(data)
+                    if (!data['success']) alert(data['log']);
+                    
                 })
             }
 
@@ -114,9 +119,10 @@
                 }).then(res => res.json())
                 .then(data => {
                     console.log(data)
+                    if (!data['success']) alert(data['log']);
                 })
             }
-            
+
             // Function to render the orderbook
             function renderOrderbook(orderbook) {
                 // console.log(orderbook);

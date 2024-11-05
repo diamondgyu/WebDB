@@ -2,21 +2,21 @@ Milestones
 
 ** CHanges from M1
 - TIMESTAMP -> INT
+- user_id INT -> VARCHAR(255)
 
 Completed
 1. Log in
 2. Sign up
-3. Stock UI
+3. Stock UI + 5 level orderbook
+4. Maker, Taker order
+5. Show trading history
+6. Update and show deposit
+7. Should not allow sell more than balance / buy exceeding deposit
+8. Making error when market order is unavailable (not enough quotes)
 
 Ongoing
-stock trade window:
-    1. Make trade (limit, maker)
-    2. Show orderbook
+9. Update and show balance
 
 Leftovers
-My page:
-    1. Showing the trade history
-    2. Show inventory
-    2. Show deposit
-
-IMPORTANT: trading!
+10. delete order
+11. UI?

@@ -21,7 +21,7 @@ CREATE TABLE Stock (
 );
 
 CREATE TABLE Balance (
-    user_id INT,
+    user_id VARCHAR(255),
     stock_code VARCHAR(10),
     quantity INT NOT NULL,
     quantity_avail INT NOT NULL,

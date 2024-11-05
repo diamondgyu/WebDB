@@ -19,12 +19,153 @@
 </head>
 
 <body>
-    <h1>My Page</h1>
     <h1 id="ID"></h1>
-
-    
-
+    <hr>
+    <h2>Deposit</h2>
+    <p id="deposit"></p>
+    <button id="depositBtn">Add 1000</button>
+    <button id="depositBtn">Subtract 1000</button>
+    <hr color="#888">
+    <h2>Stocks</h2>
+    <table id="stocks"></table>
+    <hr color="#888">
+    <h2>Active Orders</h2>
+    <table id="orders_active"></table>
+    <h2>Filled Orders</h2>
+    <table id="orders_filled"></table>
     <script>
+        
+        // add orders to table 'orders'
+        var user;
+        var balance;
+        var orders_unfilled;
+        var orders_filled;
+
+        // draw data to table
+        function drawTable(table, data) {
+            console.log(data)
+            keys = Object.keys(data);
+            console.log(keys)
+            for (var i = 0; i < keys.length; i++) {
+                var row = table.insertRow();
+                keys2 = Object.keys(data[keys[i]]);
+                for (var j = 0; j < keys2.length; j++) {
+                    var cell = row.insertCell();
+                    cell.textContent = data[keys[i]][keys2[j]];
+                }
+            }
+        }
+
+        async function load_data()
+        {
+            await fetch('http://localhost:3000/api/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                , body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID"),
+                    password: sessionStorage.getItem("password")
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                
+                if (data['result'] === false) 
+                {
+                    alert('ID or password is wrong');
+                    // window.location = 'http://localhost:3000/login';
+                }
+                console.log('User data:');
+                console.log(data['data']);
+                user = data['data'][0];
+            });
+
+            await fetch('http://localhost:3000/api/getBalance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID")
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                
+                if (data['result'] === false)
+                {
+                    console.log('No balance');
+                }
+                console.log('Balance data:');
+                console.log(data['data']);
+                balance = data['data'];
+            })
+
+            await fetch('http://localhost:3000/api/getUnfilledOrders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID")
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                
+                if (data['result'] === false)
+                {
+                    console.log('No orders');
+                }
+                console.log('Unfilled orders data:');
+                console.log(data['data']);
+                orders_unfilled = data['data'];
+            })
+
+            await fetch('http://localhost:3000/api/getFilledOrders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID")
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                
+                if (data['result'] === false)
+                {
+                    console.log('No orders');
+                }
+                console.log('Filled orders data:');
+                console.log(data['data']);
+                orders_filled = data['data'];
+            })
+
+            console.log(user)
+            console.log(balance)
+            console.log(orders_unfilled)
+            console.log(orders_filled)
+
+            // add id to h1 'ID'
+            document.getElementById('ID').textContent = 'Hello '+sessionStorage.getItem('ID')
+
+            // add deposit to p 'deposit'
+            document.getElementById('deposit').textContent = user['deposit']
+
+            drawTable(document.getElementById('stocks'), balance);
+            drawTable(document.getElementById('orders_active'), orders_unfilled);
+            drawTable(document.getElementById('orders_filled'), orders_filled);
+
+        }
+
+        load_data();
+
+        
+
+        
 
     </script>
 </body>

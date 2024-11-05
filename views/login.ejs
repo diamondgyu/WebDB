@@ -177,6 +177,7 @@
                 else {
                     // console.log(data["data"][0]["ID"]);
                     sessionStorage.setItem("ID", data["data"][0]["ID"]);
+                    sessionStorage.setItem("password", data["data"][0]["password"]);
                     window.location = 'http://localhost:3000/list';
                 }
             })
