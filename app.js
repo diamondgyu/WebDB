@@ -733,6 +733,19 @@ app.post("/api/makeOrder", async (req, res) => {
 
 app.post("/api/cancelOrder", (req, res) => {
     const ID = req.body.ID;
+    const trade_id = req.body.trade_id;
+    sql_connection.query(`delete from UnfilledTrade where trade_id = ${trade_id} and user_id = '${ID}'`, (err, result, fields) => {
+        if (err) 
+        {
+            console.log(err);
+            res.send({success: false, log: err});
+        }
+        else
+        {
+            res.send({success: true, log:"Order cancelled"});
+        }
+    });
+    
 });
 
 app.post("/api/getOrderbook", async (req, res) => {  

@@ -71,7 +71,7 @@
                 console.log(data);
                 
                 document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) - 10000
-
+                load_data();
             })
         }
     </script>
@@ -86,6 +86,11 @@
 
         // draw data to table
         function drawTable(table, data) {
+            const rowCount = table.rows.length;
+
+            for (let i = rowCount - 1; i >= 0; i--) {
+                table.deleteRow(i);
+            }
             console.log(data)
             keys = Object.keys(data);
             console.log(keys)
@@ -96,6 +101,49 @@
                     var cell = row.insertCell();
                     cell.textContent = data[keys[i]][keys2[j]];
                 }
+            }
+        }
+
+        function cancelOrder() {
+            var id = event.target.id;
+            console.log(id);
+            fetch('http://localhost:3000/api/cancelOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID"),
+                    trade_id: id
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                // load_data();
+            })
+        }
+
+        function drawActiveOrders(table, data) {
+            const rowCount = table.rows.length;
+
+            for (let i = rowCount - 1; i >= 0; i--) {
+                table.deleteRow(i);
+            }
+
+            console.log(data)
+            keys = Object.keys(data);
+            console.log(keys)
+            for (var i = 0; i < keys.length; i++) {
+                var row = table.insertRow();
+                keys2 = Object.keys(data[keys[i]]);
+                for (var j = 0; j < keys2.length; j++) {
+                    var cell = row.insertCell();
+                    cell.textContent = data[keys[i]][keys2[j]];
+                }
+                var cell = row.insertCell();
+                console.log(data[keys[i]]['trade_id']);
+                cell.innerHTML = `<button id=${data[keys[i]]['trade_id']} onclick="cancelOrder()"Cancel order</button>`
             }
         }
 
@@ -198,8 +246,9 @@
             // add deposit to p 'deposit'
             document.getElementById('deposit').textContent = user['deposit']
 
+            console.log(balance);
             drawTable(document.getElementById('stocks'), balance);
-            drawTable(document.getElementById('orders_active'), orders_unfilled);
+            drawActiveOrders(document.getElementById('orders_active'), orders_unfilled);
             drawTable(document.getElementById('orders_filled'), orders_filled);
 
         }
