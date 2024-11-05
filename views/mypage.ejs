@@ -23,8 +23,8 @@
     <hr>
     <h2>Deposit</h2>
     <p id="deposit"></p>
-    <button id="depositBtn">Add 1000</button>
-    <button id="depositBtn">Subtract 1000</button>
+    <button id="depositBtn" onclick="depositBtnAdd()">Add 1000</button>
+    <button id="depositBtn" onclick="depositBtnSub()">Subtract 1000</button>
     <hr color="#888">
     <h2>Stocks</h2>
     <table id="stocks"></table>
@@ -33,6 +33,49 @@
     <table id="orders_active"></table>
     <h2>Filled Orders</h2>
     <table id="orders_filled"></table>
+    <script>
+
+        function depositBtnAdd() {
+            fetch('http://localhost:3000/api/deposit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID"),
+                    amount: 10000
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                
+                document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) + 10000
+
+            })
+        }
+
+        function depositBtnSub() {
+            fetch('http://localhost:3000/api/deposit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID"),
+                    amount: -10000
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                
+                document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) - 10000
+
+            })
+        }
+    </script>
+
     <script>
         
         // add orders to table 'orders'
@@ -144,10 +187,10 @@
                 orders_filled = data['data'];
             })
 
-            console.log(user)
-            console.log(balance)
-            console.log(orders_unfilled)
-            console.log(orders_filled)
+            // console.log(user)
+            // console.log(balance)
+            // console.log(orders_unfilled)
+            // console.log(orders_filled)
 
             // add id to h1 'ID'
             document.getElementById('ID').textContent = 'Hello '+sessionStorage.getItem('ID')
@@ -162,11 +205,6 @@
         }
 
         load_data();
-
-        
-
-        
-
     </script>
 </body>
 </html>

@@ -13,10 +13,10 @@ Completed
 6. Update and show deposit
 7. Should not allow sell more than balance / buy exceeding deposit
 8. Making error when market order is unavailable (not enough quotes)
-
-Ongoing
 9. Update and show balance
 
-Leftovers
+Ongoing
 10. delete order
+
+Leftovers
 11. UI?

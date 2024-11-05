@@ -165,6 +165,18 @@ app.post("/api/user", (req, res) => {
     })
 })
 
+app.post("/api/deposit", (req, res) => {
+    const ID = req.body.ID;
+    console.log(ID, req.body.amount);
+    sql_connection.query(`select * from User where ID = '${ID}'`, (err, result, fields) => {
+        if(err) throw err;
+        sql_connection.query(`update User set deposit = ${result[0]['deposit']+req.body.amount} where ID = '${ID}'`, (err, result, fields) => {
+            if(err) throw err;
+            res.send({result:true, data:result});
+        })
+    })
+})
+
 // return balance, false if balance is empty
 app.post("/api/getBalance", (req, res) => {
     const ID = req.body.ID;
