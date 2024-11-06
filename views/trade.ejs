@@ -55,8 +55,58 @@
         <button id="buyBtn" class="button", onclick="buyBtn()">Buy</button>
         <button id="sellBtn" class="button", onclick="sellBtn()">Sell</button>
 
+        <div>
+            <p >From</p><input id="startDate" type="date">
+            <p>To</p><input id="endDate" type="date">
+            <button id="searchBtn" onclick="searchHistBtn()">Search</button>
+        </div>
+        <table id="orders_filled"></table>
 
         <script>
+            function drawTable(table, data) {
+                const rowCount = table.rows.length;
+
+                for (let i = rowCount - 1; i >= 0; i--) {
+                    table.deleteRow(i);
+                }
+                console.log(data)
+                keys = Object.keys(data);
+                console.log(keys)
+                for (var i = 0; i < keys.length; i++) {
+                    var row = table.insertRow();
+                    keys2 = Object.keys(data[keys[i]]);
+                    for (var j = 0; j < keys2.length; j++) {
+                        var cell = row.insertCell();
+                        cell.textContent = data[keys[i]][keys2[j]];
+                    }
+                }
+            }
+            function searchHistBtn() {
+                var startDate = document.getElementById('startDate').valueAsNumber;
+                var endDate = document.getElementById('endDate').valueAsNumber;
+                var stockCode = sessionStorage.getItem("stockCode");
+                
+                console.log(startDate);
+                console.log(endDate);
+                fetch('http://localhost:3000/api/getFilledOrders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ID: sessionStorage.getItem("ID"),
+                        stockCode: stockCode,
+                        period_start: startDate,
+                        period_end: endDate
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    if (data['result'] === false) data['data'] = {log: "No Result"};
+                    drawTable(document.getElementById('orders_filled'), data['data']);
+                })
+            }
             console.log(sessionStorage.getItem("stockCode"));
             document.getElementById("ID").innerText = "Trade " + sessionStorage.getItem("stockCode");
 

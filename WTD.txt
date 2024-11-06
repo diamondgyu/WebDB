@@ -3,6 +3,7 @@ Milestones
 ** CHanges from M1
 - TIMESTAMP -> INT
 - user_id INT -> VARCHAR(255)
+- deposit INT -> DECIMAL(15, 2)
 
 Completed
 1. Log in
@@ -15,8 +16,13 @@ Completed
 8. Making error when market order is unavailable (not enough quotes)
 9. Update and show balance
 10. Cancel order
+11. profit for stock holdings
 
 Ongoing
-11. UI?
+12. search (stock name, period) for my page, stock list
+13. trading history per stocks
+??. UI?
 
 Leftovers
+14. calculate volume_24h
+15. calculate gain_24h

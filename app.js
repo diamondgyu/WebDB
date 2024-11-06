@@ -1,6 +1,5 @@
 const express = require('express');
 const session = require('express-session');
-const flash = require('connect-flash');
 const app = express();
 
 // Set MySQL connection
@@ -15,15 +14,6 @@ const db_info = {
 
 const sql_connection = mysql.createConnection(db_info);
 sql_connection.connect();
-
-// sql_connection.query("delete from User where ID = 'undefined' or ID = ''", (err, result, fields) => {});
-
-// sql_connection.query("select * from Stock", (err, result, fields) => {
-//     if(err) throw err;
-//     if(result.length > 0) {
-//         console.log(result);
-//     }
-// })
 
 // Express session
 app.use(session({
@@ -180,15 +170,30 @@ app.post("/api/deposit", (req, res) => {
 // return balance, false if balance is empty
 app.post("/api/getBalance", (req, res) => {
     const ID = req.body.ID;
+    const stockCode = req.body.stockCode;
 
-    sql_connection.query(`select * from Balance where user_id = '${ID}'`, (err, result, fields) => {
-        if(err) throw err;
-        if(result.length > 0) {
-            res.send({result:true, data:result});
-        } else {
-            res.send({result:false, data:{}});
-        }
-    })
+    // console.log(ID, stockCode);
+
+    if (stockCode === undefined) {
+        sql_connection.query(`select * from Balance where user_id = '${ID}'`, (err, result, fields) => {
+            if(err) throw err;
+            if(result.length > 0) {
+                res.send({result:true, data:result});
+            } else {
+                res.send({result:false, data:{}});
+            }
+        })
+    } else {
+        console.log(`select * from Balance where user_id = '${ID}' and stock_code like '%${stockCode}%'`);
+        sql_connection.query(`select * from Balance where user_id = '${ID}' and stock_code like '%${stockCode}%'`, (err, result, fields) => {
+            if(err) throw err;
+            if(result.length > 0) {
+                res.send({result:true, data:result});
+            } else {
+                res.send({result:false, data:{}});
+            }
+        })
+    }
 })
 
 app.post("/api/getUnfilledOrders", (req, res) => {
@@ -206,15 +211,67 @@ app.post("/api/getUnfilledOrders", (req, res) => {
 
 app.post("/api/getFilledOrders", (req, res) => {
     const ID = req.body.ID;
+    const stockCode = req.body.stockCode;
+    // period is 
+    const period_start = req.body.period_start;
+    const period_end = req.body.period_end;
+    const get_latest = req.body.get_latest;
 
-    sql_connection.query(`select * from FilledTrade where user_id = '${ID}'`, (err, result, fields) => {
-        if(err) throw err;
-        if(result.length > 0) {
-            res.send({result:true, data:result});
-        } else {
-            res.send({result:false, data:{}});
-        }
-    })
+    console.log('getFilledOrders: ', ID, get_latest, stockCode, period_start, period_end);
+
+    if (get_latest)
+    {
+        sql_connection.query(`select * from FilledTrade where stock_code='${stockCode}' order by trade_unix_time desc limit 1`, (err, result, fields) => {
+            if(err) throw err;
+            if(result.length > 0) {
+                res.send({result:true, data:result});
+            }
+            else
+            {
+                res.send({result:false, data:{}});
+            }
+        })
+
+        return;
+    }
+
+    if (ID === undefined) // return trades per stock
+    {
+        sql_connection.query(`select * from FilledTrade where stock_code like '%${stockCode}%' and trade_unix_time between ${period_start} and ${period_end}`, (err, result, fields) => {
+            if(err) throw err;
+            if(result.length > 0) {
+                res.send({result:true, data:result});
+            } else {
+                res.send({result:false, data:{}});
+            }
+        })
+    }
+
+    else if (stockCode === undefined) // return trades per user
+    {
+        sql_connection.query(`select * from FilledTrade where user_id = '${ID}' and trade_unix_time between ${period_start} and ${period_end}`, (err, result, fields) => {
+            if(err) throw err;
+            if(result.length > 0) {
+                res.send({result:true, data:result});
+            } else {
+                res.send({result:false, data:{}});
+            }
+        })
+    }
+
+    else
+    {
+        console.log(ID, stockCode, period_start, period_end);
+        sql_connection.query(`select * from FilledTrade where user_id = '${ID}' and stock_code like '%${stockCode}%' and trade_unix_time between ${period_start} and ${period_end}`, (err, result, fields) => {
+            if(err) throw err;
+            if(result.length > 0) {
+                res.send({result:true, data:result});
+            } else {
+                res.send({result:false, data:{}});
+            }
+        })
+    }
+    
 })
 
 app.post("/api/checkIDExists", (req, res) => {
@@ -753,8 +810,6 @@ app.post("/api/getOrderbook", async (req, res) => {
     console.log(orderbook);
     res.send(orderbook);
 });
-
-app.post("")
 
 app.listen(3000, () => {
     console.log('Server is online');

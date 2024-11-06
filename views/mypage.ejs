@@ -15,6 +15,24 @@
             background-color: #1a1a1a;
             color: #fff;
         }
+
+        th {
+            width: 600px;
+            font-family: Pretendard-Bold;
+            background-color: #1a1a1a;
+            color: #888;
+            border-bottom: 1px solid #444;
+            border-top: 1px solid #444;
+            padding: 10px;
+            text-align: center;
+            height: 20px;
+        }
+
+        tbody, td, tfoot, tr {
+            height: 20px;
+            color: #fff;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -27,13 +45,109 @@
     <button id="depositBtn" onclick="depositBtnSub()">Subtract 1000</button>
     <hr color="#888">
     <h2>Stocks</h2>
-    <table id="stocks"></table>
+    <input text="text" id="searchInput" placeholder="type stock code" />
+    <button id="searchBtn" onclick="searchStockBtn()">Search</button>
+    <table id="stocks">
+        <thead>
+            <th>User ID</th>
+            <th>Stock Code</th>
+            <th>Quantity</th>
+            <th>Available quantity </th>
+            <th>Price Bought</th>
+            <th>Profit</th>
+        </thead>
+    </table>
     <hr color="#888">
     <h2>Active Orders</h2>
-    <table id="orders_active"></table>
+    <table id="orders_active">
+        <thead>
+            <th>Trade ID</th>
+            <th>User_submitted</th>
+            <th>Stock Code</th>
+            <th>Side</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>time submitted</th>
+            <th>Filled</th>
+        </thead>
+    </table>
+    <hr color="#888">
     <h2>Filled Orders</h2>
-    <table id="orders_filled"></table>
+    <div>
+        <input text="text" id="searchHistInput" placeholder="type stock code" />
+        <p >From</p><input id="startDate" type="date">
+        <p>To</p><input id="endDate" type="date">
+        <button id="searchBtn" onclick="searchHistBtn()">Search</button>
+    </div>
+    <table id="orders_filled">
+        <thead>
+            <th>Trade ID</th>
+            <th>User ID</th>
+            <th>Stock code</th>
+            <th>Side</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Timestamp</th>
+        </thead>
+    </table>
     <script>
+
+        if (sessionStorage.getItem("ID") == null || sessionStorage.getItem("ID") == undefined) {
+            alert('Please login first!');
+            window.location.href = 'http://localhost:3000/login';
+        }
+
+        function searchStockBtn() {
+            var stockCode = document.getElementById('searchInput').value;
+            console.log(stockCode);
+            fetch('http://localhost:3000/api/getBalance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID"),
+                    stockCode: stockCode
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                if (data['result'] === false) data['data'] = [{log: "No result"}];
+                drawTable(document.getElementById('stocks'), data['data']);
+            })
+        }
+
+        function searchHistBtn() {
+            var startDate = document.getElementById('startDate').valueAsNumber;
+            var endDate = document.getElementById('endDate').valueAsNumber;
+            // console.log(startDate, endDate);
+            if (isNaN(startDate)) startDate = 0;
+            if (isNaN(endDate)) endDate = Date.now();
+            // console.log(startDate, endDate);
+            var stockCode = document.getElementById('searchHistInput').value;
+            if (stockCode == undefined) stockCode = "";
+            // console.log(startDate);
+            // console.log(endDate);
+            fetch('http://localhost:3000/api/getFilledOrders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ID: sessionStorage.getItem("ID"),
+                    stockCode: stockCode,
+                    period_start: startDate,
+                    period_end: endDate
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                if (data['result'] === false) data['data'] = [{log: "No Result"}];
+                drawTable(document.getElementById('orders_filled'), data['data']);
+            })
+        }
 
         function depositBtnAdd() {
             fetch('http://localhost:3000/api/deposit', {
@@ -88,12 +202,12 @@
         function drawTable(table, data) {
             const rowCount = table.rows.length;
 
-            for (let i = rowCount - 1; i >= 0; i--) {
+            for (let i = rowCount - 1; i > 0; i--) {
                 table.deleteRow(i);
             }
-            console.log(data)
+            // console.log(data)
             keys = Object.keys(data);
-            console.log(keys)
+            // console.log(keys)
             for (var i = 0; i < keys.length; i++) {
                 var row = table.insertRow();
                 keys2 = Object.keys(data[keys[i]]);
@@ -104,9 +218,57 @@
             }
         }
 
+        async function drawStockTable(table, data) {
+            const rowCount = table.rows.length;
+
+            for (let i = rowCount - 1; i > 0; i--) {
+                table.deleteRow(i);
+            }
+
+            console.log(data)
+            keys = Object.keys(data);
+            console.log('drawStockTable', keys)
+            for (var i = 0; i < keys.length; i++) {
+                const idx = i;
+                console.log('calcprofit', keys[idx])
+                var row = table.insertRow();
+                keys2 = Object.keys(data[keys[idx]]);
+                for (var j = 0; j < keys2.length; j++) {
+                    var cell = row.insertCell();
+                    cell.textContent = data[keys[idx]][keys2[j]];
+                }
+
+                var cell = row.insertCell();
+                var price_now;
+                // console.log('inventory: ', data[keys[idx]]['stock_code']);
+                // console.log('calcprofit', keys[idx])
+                await fetch('http://localhost:3000/api/getFilledOrders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ID: sessionStorage.getItem("ID"),
+                        stockCode: data[keys[idx]]['stock_code'],
+                        get_latest: true
+                    })
+                })
+                .then(res => res.json())
+                .then(dt => {
+                    
+                    price_now = parseFloat(dt['data'][keys[idx]]['trade_price']);
+                    // console.log(price_now);
+                    // console.log(data);
+                    // console.log('calcprofit2', dt['data'], idx, keys[idx]);
+                })
+                // console.log(price_now, data[keys[idx]]['price_bought'])
+                cell.textContent = `${Math.round((price_now/parseFloat(data[keys[idx]]['price_bought'])-1)*10000)/100}%`;
+            }
+        }
+
         function cancelOrder() {
             var id = event.target.id;
-            console.log(id);
+            // console.log(id);
             fetch('http://localhost:3000/api/cancelOrder', {
                 method: 'POST',
                 headers: {
@@ -127,13 +289,13 @@
         function drawActiveOrders(table, data) {
             const rowCount = table.rows.length;
 
-            for (let i = rowCount - 1; i >= 0; i--) {
+            for (let i = rowCount - 1; i > 0; i--) {
                 table.deleteRow(i);
             }
 
-            console.log(data)
+            // console.log(data)
             keys = Object.keys(data);
-            console.log(keys)
+            // console.log(keys)
             for (var i = 0; i < keys.length; i++) {
                 var row = table.insertRow();
                 keys2 = Object.keys(data[keys[i]]);
@@ -142,8 +304,8 @@
                     cell.textContent = data[keys[i]][keys2[j]];
                 }
                 var cell = row.insertCell();
-                console.log(data[keys[i]]['trade_id']);
-                cell.innerHTML = `<button id=${data[keys[i]]['trade_id']} onclick="cancelOrder()"Cancel order</button>`
+                // console.log(data[keys[i]]['trade_id']);
+                cell.innerHTML = `<button id=${data[keys[i]]['trade_id']} onclick="cancelOrder()">Cancel order</button>`
             }
         }
 
@@ -220,7 +382,9 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    ID: sessionStorage.getItem("ID")
+                    ID: sessionStorage.getItem("ID"),
+                    period_start: 0,
+                    period_end: Date.now()
                 })
             })
             .then(res => res.json())
@@ -230,8 +394,8 @@
                 {
                     console.log('No orders');
                 }
-                console.log('Filled orders data:');
-                console.log(data['data']);
+                // console.log('Filled orders data:');
+                // console.log(data['data']);
                 orders_filled = data['data'];
             })
 
@@ -247,10 +411,9 @@
             document.getElementById('deposit').textContent = user['deposit']
 
             console.log(balance);
-            drawTable(document.getElementById('stocks'), balance);
+            drawStockTable(document.getElementById('stocks'), balance);
             drawActiveOrders(document.getElementById('orders_active'), orders_unfilled);
             drawTable(document.getElementById('orders_filled'), orders_filled);
-
         }
 
         load_data();
