@@ -25,9 +25,10 @@ Completed
 16. I can't see another stock in balance
 17. Market cap problems
 18. deposit problems when trading
+19. PER, PBR, debt ratio, ...
 
 Ongoing
-19. PER, PBR, debt ratio, ...
+20. 'Available' deposit and quantity
 ??. UI?
 
 Leftovers

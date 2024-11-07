@@ -132,7 +132,7 @@ async function getOrderbook(stockCode, slice) {
     });
 
     return orderbook;
-}
+}   
 
 app.post("/api/getStocks", (req, res) => {
     const stockCode = req.body.stockCode;
@@ -472,7 +472,7 @@ app.post("/api/makeOrder", async (req, res) => {
         res.send({success: false, log: "Not enough deposit"});
         return;
     }
-    else if (side === "sell" && ( balance_me === undefined || quantity > balance_me['quantity']))
+    else if (side === "sell" && ( balance_me === undefined || quantity > balance_me['quantity_avail']))
     {
         console.log("Not enough stock");
         res.send({success: false, log: "Not enough stock"});
@@ -559,6 +559,8 @@ app.post("/api/makeOrder", async (req, res) => {
             {
                 // place limit order
                 sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
+                // Subtract deposit (this will be refunded when the order is cancelled)
+                sql_connection.query(`update User set deposit=${account_me['deposit']-quantity_order*price} where ID='${ID}'`);
                 unfilled_trade_id += 1
             }            
         }
@@ -636,6 +638,8 @@ app.post("/api/makeOrder", async (req, res) => {
             {
                 // place limit order
                 sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
+                // lock stocks
+                sql_connection.query(`update Balance set quantity_avail=${balance_me['quantity_avail']-quantity_order} where user_id='${ID}' and stock_code='${stockCode}'`)
                 unfilled_trade_id += 1
             }    
         }
@@ -833,9 +837,29 @@ app.post("/api/makeOrder", async (req, res) => {
     res.send({success: true, log:"Order placed"});
 });
 
-app.post("/api/cancelOrder", (req, res) => {
+app.post("/api/cancelOrder", async (req, res) => {
     const ID = req.body.ID;
     const trade_id = req.body.trade_id;
+    data = await sql_connection.promise().query(`select * from UnfilledTrade where trade_id=${trade_id}`)
+    // console.log('Cancel order: ', ID, trade_id, data[0]);
+    // console.log(data)
+    const stockCode = data[0][0]['stock_code'];
+    if (data[0][0]['trade_side'] === 'sell') // release locked stocks
+    {
+        balance = await sql_connection.promise().query(`select * from Balance where user_id='${ID}' and stock_code='${stockCode}'`)
+        console.log(balance)
+        console.log(balance[0][0]['quantity_avail'], data[0][0]['trade_quantity'], data[0][0]['trade_filled'])
+        sql_connection.query(`update Balance set quantity_avail=${balance[0][0]['quantity_avail']+(data[0][0]['trade_quantity']-data[0][0]['trade_filled'])} where user_id='${ID}' and stock_code='${stockCode}'`)
+    }
+    else // buy order is cancelled: release locked deposit
+    {
+        // console.log(parseFloat(data[0]['trade_price']), parseFloat(data[0]['trade_quantity']-data[0]['trade_filled']))
+        deposit = await sql_connection.promise().query(`select deposit from User where ID='${ID}'`)
+        // console.log(deposit)
+        sql_connection.query(`update User set deposit=${parseFloat(deposit[0][0]['deposit'])+parseFloat(data[0][0]['trade_price'])*(data[0][0]['trade_quantity']-data[0][0]['trade_filled'])} where ID='${ID}'`)
+        // sql_connection.query(`update Balance set quantity_avail=${1} where user_id='${ID}' and stock_code='${stockCode}'`)
+    }
+
     sql_connection.query(`delete from UnfilledTrade where trade_id = ${trade_id} and user_id = '${ID}'`, (err, result, fields) => {
         if (err) 
         {

@@ -5,7 +5,7 @@ use DB_2021083681;
 CREATE TABLE User (
     ID VARCHAR(255) PRIMARY KEY,
     password VARCHAR(255) NOT NULL,
-    deposit DECIMAL(15, 2) NOT NULL
+    deposit DECIMAL(15, 2) NOT NULL,
 );
 
 CREATE TABLE Stock (

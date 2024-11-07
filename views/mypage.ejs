@@ -69,6 +69,7 @@
             <th>Quantity</th>
             <th>time submitted</th>
             <th>Filled</th>
+            <th>Cancel</th>
         </thead>
     </table>
     <hr color="#888">
@@ -319,6 +320,7 @@
             // console.log(keys)
             for (var i = 0; i < keys.length; i++) {
                 var row = table.insertRow();
+                console.log('draw active orders')
                 keys2 = Object.keys(data[keys[i]]);
                 for (var j = 0; j < keys2.length; j++) {
                     var cell = row.insertCell();
@@ -330,8 +332,9 @@
                     else cell.textContent = data[keys[i]][keys2[j]];
                 }
                 var cell = row.insertCell();
-                // console.log(data[keys[i]]['trade_id']);
-                if (!data[0] === 'No result')
+                console.log('draw active orders');
+                console.log(data[0]);
+                if (!(data[0]['log'] === 'No result'))
                     cell.innerHTML = `<button id=${data[keys[i]]['trade_id']} onclick="cancelOrder()">Cancel order</button>`
             }
         }
