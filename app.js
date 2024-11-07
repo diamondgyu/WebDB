@@ -511,10 +511,10 @@ app.post("/api/makeOrder", async (req, res) => {
                         console.log(order_q-order_filled, quantity_order);
                         sql_connection.query(`delete from UnfilledTrade where trade_id = ${order['trade_id']}`);
                         // as a buyer
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'buy', ${price}, ${order_q-order_filled}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'buy', ${order['trade_price']}, ${order_q-order_filled}, '${Date.now()}')`)
                         filled_trade_id += 1
                         // as a seller
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'sell', ${price}, ${order_q-order_filled}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'sell', ${order['trade_price']}, ${order_q-order_filled}, '${Date.now()}')`)
                         filled_trade_id += 1
                         quantity_order = quantity_order - (order_q-order_filled);
 
@@ -530,10 +530,10 @@ app.post("/api/makeOrder", async (req, res) => {
                         console.log(order_q-order_filled, quantity_order);
                         sql_connection.query(`update UnfilledTrade set trade_filled=${order_filled+quantity_order} where trade_id = ${order['trade_id']}`);
                         // as a buyer: me
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'buy', ${order['trade_price']}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         // as a seller: limit orderer
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'sell', ${order['trade_price']}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         await updateBalance(ID, order, stockCode, 'buy', quantity_order, order['trade_price']);
                         await updateGainVol(order, stockCode);
@@ -591,10 +591,10 @@ app.post("/api/makeOrder", async (req, res) => {
                         console.log(order_q-order_filled, quantity_order);
                         sql_connection.query(`delete from UnfilledTrade where trade_id = ${order['trade_id']}`);
                         // as a seller (me)
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'sell', ${price}, ${order_q-order_filled}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'sell', ${order['trade_price']}, ${order_q-order_filled}, '${Date.now()}')`)
                         filled_trade_id += 1
                         // as a buyer
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'buy', ${price}, ${order_q-order_filled}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'buy', ${order['trade_price']}, ${order_q-order_filled}, '${Date.now()}')`)
                         filled_trade_id += 1
                         quantity_order = quantity_order - (order_q-order_filled);
                         await updateBalance(ID, order, stockCode, 'sell', order_q-order_filled, order['trade_price']);
@@ -609,10 +609,10 @@ app.post("/api/makeOrder", async (req, res) => {
                         
                         sql_connection.query(`update UnfilledTrade set trade_filled=${order_filled+quantity_order} where trade_id = ${order['trade_id']}`);
                         // as a seller: me
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${ID}', '${stockCode}', 'sell', ${order['trade_price']}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         // as a buyer: limit orderer
-                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}')`)
+                        sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'buy', ${order['trade_price']}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         await updateBalance(ID, order, stockCode, 'sell', quantity_order, order['trade_price']);
                         await updateGainVol(order, stockCode);

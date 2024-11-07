@@ -194,6 +194,10 @@
 
         <script>
             function buyBtn() {
+                if (sessionStorage.getItem("ID") === null || sessionStorage.getItem("ID") === undefined) {
+                    alert('Please login first!');
+                    return;
+                }
                 console.log("Buy button clicked");
                 // get the radio value
                 var orderType;
@@ -222,6 +226,10 @@
             }
 
             function sellBtn() {
+                if (sessionStorage.getItem("ID") === null || sessionStorage.getItem("ID") === undefined) {
+                    alert('Please login first!');
+                    return;
+                }
                 console.log("Sell button clicked");
                 // get the radio value
                 var orderType;

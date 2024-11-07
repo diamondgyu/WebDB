@@ -37,7 +37,11 @@
 </head>
 
 <body>
-    <h1 id="ID"></h1>
+    <div>
+        <h1 id="ID"></h1>
+        <button id="logoutBtn" onclick="logoutBtn()">Logout</button>
+    </div>
+    
     <hr>
     <h2>Deposit</h2>
     <p id="deposit"></p>
@@ -92,7 +96,10 @@
         </thead>
     </table>
     <script>
-
+        function logoutBtn() {
+            sessionStorage.clear();
+            location.href = "http://localhost:3000/";
+        }
         
 
         function searchStockBtn() {

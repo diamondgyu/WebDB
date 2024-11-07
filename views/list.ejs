@@ -197,9 +197,11 @@
         // if (sessionStorage.getItem("ID") === "undefined") {
         //     window.location = 'http://localhost:3000/login';
         // }
-        
+        if (sessionStorage.getItem('ID') === null || sessionStorage.getItem('ID') === undefined) {
+            document.getElementById('ID').innerText = "Hello, Guest";
+        } else {
         document.getElementById("ID").innerText = "Hello, "+sessionStorage.getItem("ID");
-        
+        }
         document.getElementById('VButton').click();
         document.getElementById('MCButton').click();
         document.getElementById('GainButton').click();
@@ -296,6 +298,7 @@
                     cell4.textContent = stocks[i].gain_24h+"%";
                     console.log(parseFloat(stocks[i].gain_24h))
                     parseFloat(stocks[i].gain_24h)>0 ? cell4.className="positive" : cell4.className="negative";
+                    if (parseFloat(stocks[i].gain_24h)===0) cell4.className="neutral";
                     cell5.textContent = stocks[i].volume_24h;
                     cell6.textContent = Math.round(stocks[i].stocks_total*stocks[i]['price']);
                     row.onclick = rowClickHandler(row);
