@@ -203,6 +203,19 @@
                 var orderType;
                 document.getElementById("limitCheckbox").checked ? console.log("Limit") : console.log("Market");
                 document.getElementById("limitCheckbox").checked ? orderType = "limit" : orderType = "market";
+                if (orderType === 'limit') {
+                    if (document.getElementById("priceInput").value === "" || document.getElementById("quantityInput").value === "") {
+                        alert("Please fill in every blanks.");
+                        return;
+                    }
+                }
+                if (orderType === 'market') {
+                    if (document.getElementById("quantityInput").value === "") {
+                        alert("Please fill in 'quantity'.");
+                        return;
+                    }
+                }
+                
                 
                 fetch('http://localhost:3000/api/makeOrder', {
                     method: 'POST',

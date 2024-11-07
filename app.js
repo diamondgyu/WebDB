@@ -337,7 +337,7 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
             // get updated average price for me
             price_avg = (balance_me['quantity']*balance_me['price_bought'] + quantity*price)/(balance_me['quantity']+quantity)
             // change balance for me
-            await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']+quantity}, quantity_avail = ${balance_me['quantity']+quantity}, price_bought = ${price_avg} where user_id = '${ID}' and stock_code = '${stockCode}'`);
+            await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']+quantity}, quantity_avail = ${balance_me['quantity_avail']+quantity}, price_bought = ${price_avg} where user_id = '${ID}' and stock_code = '${stockCode}'`);
             // change balance for the opponent
             if (balance_opponent['quantity']-quantity === 0) // should delete the balance: no balance
             {
@@ -346,7 +346,7 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
             else // not now
             {
 
-                await sql_connection.promise().query(`update Balance set quantity = ${balance_opponent['quantity']-quantity}, quantity_avail = ${balance_opponent['quantity']-quantity} where user_id = '${IDOpponent}' and stock_code = '${stockCode}'`);
+                await sql_connection.promise().query(`update Balance set quantity = ${balance_opponent['quantity']-quantity} where user_id = '${IDOpponent}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
             console.log(account_me['deposit'], price, quantity);
@@ -365,7 +365,7 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
             else // not now
             {
                 // console.log(balance_opponent['quantity'], IDOpponent);
-                await sql_connection.promise().query(`update Balance set quantity = ${balance_opponent['quantity']-quantity}, quantity_avail = ${balance_opponent['quantity']-quantity} where user_id = '${IDOpponent}' and stock_code = '${stockCode}'`);
+                await sql_connection.promise().query(`update Balance set quantity = ${balance_opponent['quantity']-quantity} where user_id = '${IDOpponent}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
             console.log(price, quantity);
@@ -393,7 +393,13 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
             }
             else // not now
             {
-                await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']-quantity}, quantity_avail = ${balance_me['quantity']-quantity} where user_id = '${ID}' and stock_code = '${stockCode}'`);
+                console.log('sell order: ', balance_me['quantity_avail'], quantity)
+                await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']-quantity}, quantity_avail = ${balance_me['quantity_avail']-quantity} where user_id = '${ID}' and stock_code = '${stockCode}'`);
+                sql_connection.query(`select * from Balance where user_id='${ID}' and stock_code='${stockCode}'`, (err, result, fields) => {
+                    if (err) throw err;
+                    console.log(result);
+                });
+                console.log('quantity_avail: ', balance_me['quantity_avail'])
             }
             // update deposit for two
             console.log(ID, account_me['deposit'], price, quantity);
@@ -412,7 +418,8 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
             }
             else // not now
             {
-                await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']-quantity}, quantity_avail = ${balance_me['quantity']-quantity} where user_id = '${ID}' and stock_code = '${stockCode}'`);
+                console.log('sell order: ',balance_me['quantity_avail'], quantity)
+                await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']-quantity}, quantity_avail = ${balance_me['quantity_avail']-quantity} where user_id = '${ID}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
             console.log(account_me['deposit'], price, quantity);
@@ -560,7 +567,9 @@ app.post("/api/makeOrder", async (req, res) => {
                 // place limit order
                 sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
                 // Subtract deposit (this will be refunded when the order is cancelled)
-                sql_connection.query(`update User set deposit=${account_me['deposit']-quantity_order*price} where ID='${ID}'`);
+                var deposit = await sql_connection.promise().query(`select deposit from User where ID = '${ID}'`);
+                console.log(deposit)
+                sql_connection.query(`update User set deposit=${parseFloat(deposit[0][0]['deposit'])-quantity_order*price} where ID='${ID}'`);
                 unfilled_trade_id += 1
             }            
         }
@@ -639,7 +648,9 @@ app.post("/api/makeOrder", async (req, res) => {
                 // place limit order
                 sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
                 // lock stocks
-                sql_connection.query(`update Balance set quantity_avail=${balance_me['quantity_avail']-quantity_order} where user_id='${ID}' and stock_code='${stockCode}'`)
+                var quantity_avail = await sql_connection.promise().query(`select quantity_avail from Balance where user_id='${ID}' and stock_code='${stockCode}'`)
+                console.log(quantity_avail)
+                sql_connection.query(`update Balance set quantity_avail=${quantity_avail[0][0]['quantity_avail']-quantity_order} where user_id='${ID}' and stock_code='${stockCode}'`)
                 unfilled_trade_id += 1
             }    
         }

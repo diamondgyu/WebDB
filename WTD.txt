@@ -1,10 +1,10 @@
 Milestones
 
-** CHanges from M1
-- TIMESTAMP -> INT
-- user_id INT -> VARCHAR(255)
-- deposit INT -> DECIMAL(15, 2)
-- market_cap decimal (15, 3) -> stocks_total int
+** Changes from M1
+- FilledTrade, UnfilledTrade TIMESTAMP -> INT
+- Balance, FilledTrade, UnfilledTrade user_id INT -> VARCHAR(255)
+- User deposit INT -> DECIMAL(15, 2)
+- Stock market_cap decimal (15, 2) -> stocks_total int
 
 Completed
 1. Log in
@@ -25,10 +25,11 @@ Completed
 16. I can't see another stock in balance
 17. Market cap problems
 18. deposit problems when trading
-19. PER, PBR, debt ratio, ...
+19. PER, PBR, debt ratio
+20. 'Available' deposit and quantity
 
 Ongoing
-20. 'Available' deposit and quantity
+
 ??. UI?
 
 Leftovers
