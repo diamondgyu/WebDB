@@ -134,8 +134,9 @@ async function getOrderbook(stockCode, slice) {
     return orderbook;
 }
 
-app.get("/api/getStocks", (req, res) => {
-    sql_connection.query("select * from Stock", (err, result, fields) => {
+app.post("/api/getStocks", (req, res) => {
+    const stockCode = req.body.stockCode;
+    sql_connection.query("select * from Stock where code like '%"+stockCode+"%'", (err, result, fields) => {
         if(err) throw err;
         res.send(result);
     })
@@ -160,7 +161,8 @@ app.post("/api/deposit", (req, res) => {
     console.log(ID, req.body.amount);
     sql_connection.query(`select * from User where ID = '${ID}'`, (err, result, fields) => {
         if(err) throw err;
-        sql_connection.query(`update User set deposit = ${result[0]['deposit']+req.body.amount} where ID = '${ID}'`, (err, result, fields) => {
+        console.log(result)
+        sql_connection.query(`update User set deposit = ${parseFloat(result[0]['deposit'])+parseFloat(req.body.amount)} where ID = '${ID}'`, (err, result, fields) => {
             if(err) throw err;
             res.send({result:true, data:result});
         })
@@ -184,7 +186,7 @@ app.post("/api/getBalance", (req, res) => {
             }
         })
     } else {
-        console.log(`select * from Balance where user_id = '${ID}' and stock_code like '%${stockCode}%'`);
+        // console.log(`select * from Balance where user_id = '${ID}' and stock_code like '%${stockCode}%'`);
         sql_connection.query(`select * from Balance where user_id = '${ID}' and stock_code like '%${stockCode}%'`, (err, result, fields) => {
             if(err) throw err;
             if(result.length > 0) {
@@ -223,6 +225,7 @@ app.post("/api/getFilledOrders", (req, res) => {
     {
         sql_connection.query(`select * from FilledTrade where stock_code='${stockCode}' order by trade_unix_time desc limit 1`, (err, result, fields) => {
             if(err) throw err;
+            console.log(result)
             if(result.length > 0) {
                 res.send({result:true, data:result});
             }
@@ -319,7 +322,8 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
     const [row5, fields5] = await sql_connection.promise().query(`select * from Balance where user_id='${IDOpponent}' and stock_code='${stockCode}'`)//[0][0]
     const balance_opponent = row5[0];
     if (IDOpponent === ID) return;
-    if (side === "buy")
+
+    if (side === "buy") // when i buy
     {
         console.log(IDOpponent);
         console.log(account_me);
@@ -327,6 +331,7 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
         console.log(balance_me);
         console.log(balance_opponent);
 
+        
         if (!(balance_me === undefined)) // I have the stock: update
         {
             // get updated average price for me
@@ -344,6 +349,7 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
                 await sql_connection.promise().query(`update Balance set quantity = ${balance_opponent['quantity']-quantity}, quantity_avail = ${balance_opponent['quantity']-quantity} where user_id = '${IDOpponent}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
+            console.log(account_me['deposit'], price, quantity);
             await sql_connection.promise().query(`update User set deposit = ${account_me['deposit']-price*quantity} where ID = '${ID}'`)
             await sql_connection.promise().query(`update User set deposit = ${account_opponent['deposit']+price*quantity} where ID = '${IDOpponent}'`)
         }   
@@ -362,6 +368,7 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
                 await sql_connection.promise().query(`update Balance set quantity = ${balance_opponent['quantity']-quantity}, quantity_avail = ${balance_opponent['quantity']-quantity} where user_id = '${IDOpponent}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
+            console.log(price, quantity);
             await sql_connection.promise().query(`update User set deposit = ${account_me['deposit']-price*quantity} where ID = '${ID}'`)
             await sql_connection.promise().query(`update User set deposit = ${account_opponent['deposit']+price*quantity} where ID = '${IDOpponent}'`)
         }
@@ -389,9 +396,11 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
                 await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']-quantity}, quantity_avail = ${balance_me['quantity']-quantity} where user_id = '${ID}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
-            await sql_connection.promise().query(`update User set deposit = ${account_opponent['deposit']-price*quantity} where ID = '${IDOpponent}'`)
-            await sql_connection.promise().query(`update User set deposit = ${account_me['deposit']+price*quantity} where ID = '${ID}'`)
-        }   
+            console.log(ID, account_me['deposit'], price, quantity);
+            await sql_connection.promise().query(`update User set deposit = ${parseFloat(account_opponent['deposit'])-price*quantity} where ID = '${IDOpponent}'`)
+            await sql_connection.promise().query(`update User set deposit = ${parseFloat(account_me['deposit'])+price*quantity} where ID = '${ID}'`)
+                       
+        }
         else // Opponent doesn't have the stock before: insert
         {
             // change balance for opponent
@@ -406,11 +415,34 @@ async function updateBalance(ID, order, stockCode, side, quantity, price)
                 await sql_connection.promise().query(`update Balance set quantity = ${balance_me['quantity']-quantity}, quantity_avail = ${balance_me['quantity']-quantity} where user_id = '${ID}' and stock_code = '${stockCode}'`);
             }
             // update deposit for two
+            console.log(account_me['deposit'], price, quantity);
             await sql_connection.promise().query(`update User set deposit = ${account_opponent['deposit']-price*quantity} where ID = '${IDOpponent}'`)
             await sql_connection.promise().query(`update User set deposit = ${account_me['deposit']+price*quantity} where ID = '${ID}'`)
         }
     }
+
     
+}
+
+async function updateGainVol(order, stockCode)
+{
+    // get close price of the ordered stock yesterday
+    var now = new Date();
+    var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var timestamp = Date.now()-86400000;
+
+    const [row6, fields6] = await sql_connection.promise().query(`select trade_price from FilledTrade where stock_code = '${stockCode}' and trade_unix_time < ${timestamp} limit 1`);
+    console.log('price_stock: ',row6)
+    // update volume_24h
+    // console.log(`select sum(trade_quantity) from FilledTrade where stock_code = '${stockCode}' and trade_unix_time between ${order['trade_unix_time']-86400000} and ${order['trade_unix_time']}`);
+    const [row7, fields7] = await sql_connection.promise().query(`select sum(trade_quantity) from FilledTrade where stock_code = '${stockCode}' and trade_unix_time between ${order['trade_unix_time']-86400000} and ${order['trade_unix_time']+10000000}`);
+    console.log('volume_stock: ', row7);
+    if (row7[0]['sum(trade_quantity)'] === null) row7[0]['sum(trade_quantity)'] = 0
+
+    await sql_connection.promise().query(`update Stock set volume_24h = ${row7[0]['sum(trade_quantity)']/2} where code = '${stockCode}'`);
+    await sql_connection.promise().query(`update Stock set gain_24h = ${(order['trade_price']-(row6[0]['trade_price']))/(row6[0]['trade_price'])*100} where code = '${stockCode}'`);
+    await sql_connection.promise().query(`update Stock set price=${order['trade_price']} where code='${stockCode}'`)
+
 }
 
 // POST functions for orders
@@ -431,6 +463,8 @@ app.post("/api/makeOrder", async (req, res) => {
     balance_me = await sql_connection.promise().query(`select * from Balance where user_id = '${ID}' and stock_code = '${stockCode}'`);
     balance_me = balance_me[0][0];
 
+    console.log(balance_me, quantity);
+
     // refuse order when balance is too low
     if (side === "buy" && quantity*price > account_me['deposit'])
     {
@@ -438,7 +472,7 @@ app.post("/api/makeOrder", async (req, res) => {
         res.send({success: false, log: "Not enough deposit"});
         return;
     }
-    else if (side === "sell" && quantity > balance_me['quantity'])
+    else if (side === "sell" && ( balance_me === undefined || quantity > balance_me['quantity']))
     {
         console.log("Not enough stock");
         res.send({success: false, log: "Not enough stock"});
@@ -448,6 +482,12 @@ app.post("/api/makeOrder", async (req, res) => {
     // var ord = getOrderbook(stockCode);
     if (type === "limit") 
     {
+        if (isNaN(price))
+        {
+            res.send({success: false, log: "Invalid order price"});
+            return;
+        }
+
         // buying the stock
         if (side === "buy")
         {
@@ -479,6 +519,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         quantity_order = quantity_order - (order_q-order_filled);
 
                         await updateBalance(ID, order, stockCode, 'buy', order_q-order_filled, order['trade_price']);
+                        await updateGainVol(order, stockCode);
 
                         
                     }
@@ -495,6 +536,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         await updateBalance(ID, order, stockCode, 'buy', quantity_order, order['trade_price']);
+                        await updateGainVol(order, stockCode);
                         quantity_order = 0;
                         return true;
                     }
@@ -554,6 +596,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         filled_trade_id += 1
                         quantity_order = quantity_order - (order_q-order_filled);
                         await updateBalance(ID, order, stockCode, 'sell', order_q-order_filled, order['trade_price']);
+                        await updateGainVol(order, stockCode);
                     }
                     // if the remaining quantity in the order book is larger than the quantity of the order
                     else if (order_q-order_filled > quantity_order)
@@ -570,7 +613,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         await updateBalance(ID, order, stockCode, 'sell', quantity_order, order['trade_price']);
-                        
+                        await updateGainVol(order, stockCode);
                         quantity_order = 0;
                         return true;
                     }
@@ -647,6 +690,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         quantity_order = quantity_order - (order_q-order_filled);
 
                         await updateBalance(ID, order, stockCode, 'buy', order_q-order_filled, order['trade_price']);
+                        await updateGainVol(order, stockCode);
                     }
                     // if the remaining quantity in the order book is larger than the quantity of the order
                     else if (order_q-order_filled > quantity_order)
@@ -666,7 +710,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         console.log(quantity_order)
 
                         await updateBalance(ID, order, stockCode, 'buy', quantity_order, order['trade_price']);
-                        
+                        await updateGainVol(order, stockCode);
                         quantity_order = 0;
                         return true;
                     }
@@ -685,12 +729,12 @@ app.post("/api/makeOrder", async (req, res) => {
                 if (result) {break;}
             }
 
-            if (quantity_order > 0 && orders.length > 1)
-            {
-                // place limit order
-                sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
-                unfilled_trade_id += 1
-            }            
+            // if (quantity_order > 0 && orders.length > 1)
+            // {
+            //     // place limit order
+            //     sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'buy', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
+            //     unfilled_trade_id += 1
+            // }            
         }
         else if (side === "sell")
         {
@@ -738,7 +782,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         filled_trade_id += 1
                         quantity_order = quantity_order - (order_q-order_filled);
                         await updateBalance(ID, order, stockCode, 'sell', order_q-order_filled, order['trade_price']);
-                        
+                        await updateGainVol(order, stockCode);
                     }
                     // if the remaining quantity in the order book is larger than the quantity of the order
                     else if (order_q-order_filled > quantity_order)
@@ -753,6 +797,7 @@ app.post("/api/makeOrder", async (req, res) => {
                         sql_connection.query(`insert into FilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time) values (${filled_trade_id}, '${order['user_id']}', '${stockCode}', 'buy', ${order['trade_price']}, ${quantity_order}, '${Date.now()}')`)
                         filled_trade_id += 1
                         await updateBalance(ID, order, stockCode, 'sell', quantity_order, order['trade_price']);
+                        await updateGainVol(order, stockCode);
                         quantity_order = 0;
                         return true;
                     }
@@ -770,12 +815,12 @@ app.post("/api/makeOrder", async (req, res) => {
                 if (result) break;
             }
 
-            if (quantity_order > 0 && orders.length > 1)
-            {
-                // place limit order
-                sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
-                unfilled_trade_id += 1
-            }    
+            // if (quantity_order > 0 && orders.length > 1)
+            // {
+            //     // place limit order
+            //     sql_connection.query(`insert into UnfilledTrade (trade_id, user_id, stock_code, trade_side, trade_price, trade_quantity, trade_unix_time, trade_filled) values (${unfilled_trade_id}, '${ID}', '${stockCode}', 'sell', ${price}, ${quantity_order}, '${Date.now()}', 0)`);
+            //     unfilled_trade_id += 1
+            // }    
         }
         else
         {

@@ -12,7 +12,7 @@ CREATE TABLE Stock (
     code VARCHAR(10) PRIMARY KEY,
     stock_name VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
-    market_cap DECIMAL(15, 2) NOT NULL,
+    stocks_total INT NOT NULL,
     volume_24h DECIMAL(15, 2) NOT NULL,
     gain_24h DECIMAL(10, 2) NOT NULL,
     PER DECIMAL(10, 2) NOT NULL,

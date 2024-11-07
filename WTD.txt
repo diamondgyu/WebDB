@@ -4,6 +4,7 @@ Milestones
 - TIMESTAMP -> INT
 - user_id INT -> VARCHAR(255)
 - deposit INT -> DECIMAL(15, 2)
+- market_cap decimal (15, 3) -> stocks_total int
 
 Completed
 1. Log in
@@ -17,12 +18,16 @@ Completed
 9. Update and show balance
 10. Cancel order
 11. profit for stock holdings
+12. trading history per stocks
+13. search (stock name, period) for my page, stock list
+14. calculate and update volume_24h
+15. calculate and update gain_24h
+16. I can't see another stock in balance
+17. Market cap problems
+18. deposit problems when trading
 
 Ongoing
-12. search (stock name, period) for my page, stock list
-13. trading history per stocks
+19. PER, PBR, debt ratio, ...
 ??. UI?
 
 Leftovers
-14. calculate volume_24h
-15. calculate gain_24h

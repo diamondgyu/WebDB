@@ -62,7 +62,7 @@
     <table id="orders_active">
         <thead>
             <th>Trade ID</th>
-            <th>User_submitted</th>
+            <th>User submitted</th>
             <th>Stock Code</th>
             <th>Side</th>
             <th>Price</th>
@@ -92,10 +92,7 @@
     </table>
     <script>
 
-        if (sessionStorage.getItem("ID") == null || sessionStorage.getItem("ID") == undefined) {
-            alert('Please login first!');
-            window.location.href = 'http://localhost:3000/login';
-        }
+        
 
         function searchStockBtn() {
             var stockCode = document.getElementById('searchInput').value;
@@ -124,6 +121,7 @@
             // console.log(startDate, endDate);
             if (isNaN(startDate)) startDate = 0;
             if (isNaN(endDate)) endDate = Date.now();
+            endDate += 86400000;
             // console.log(startDate, endDate);
             var stockCode = document.getElementById('searchHistInput').value;
             if (stockCode == undefined) stockCode = "";
@@ -157,14 +155,14 @@
                 },
                 body: JSON.stringify({
                     ID: sessionStorage.getItem("ID"),
-                    amount: 10000
+                    amount: 1000
                 })
             })
             .then(res => res.json())
             .then(data => {
                 console.log(data);
                 
-                document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) + 10000
+                document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) + 1000
 
             })
         }
@@ -177,20 +175,27 @@
                 },
                 body: JSON.stringify({
                     ID: sessionStorage.getItem("ID"),
-                    amount: -10000
+                    amount: -1000
                 })
             })
             .then(res => res.json())
             .then(data => {
                 console.log(data);
                 
-                document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) - 10000
-                load_data();
+                document.getElementById('deposit').textContent = parseInt(document.getElementById('deposit').textContent) - 1000
+                // load_data();
             })
         }
     </script>
 
     <script>
+
+        console.log('sessionStorage.getItem("ID")', sessionStorage.getItem("ID"));
+
+        if (sessionStorage.getItem("ID") === null || sessionStorage.getItem("ID") === undefined) {
+            alert('Please login first!');
+            window.location.href = 'http://localhost:3000/login';
+        }
         
         // add orders to table 'orders'
         var user;
@@ -210,59 +215,75 @@
             // console.log(keys)
             for (var i = 0; i < keys.length; i++) {
                 var row = table.insertRow();
+                
                 keys2 = Object.keys(data[keys[i]]);
+                
                 for (var j = 0; j < keys2.length; j++) {
                     var cell = row.insertCell();
-                    cell.textContent = data[keys[i]][keys2[j]];
+                    if (keys2[j] === 'trade_unix_time')
+                    {
+                        // console.log(data[keys[i]][keys2[j]])
+                        cell.textContent = new Date(data[keys[i]][keys2[j]]).toLocaleString();
+                    }
+                    else cell.textContent = data[keys[i]][keys2[j]];
                 }
             }
         }
 
-        async function drawStockTable(table, data) {
+        async function drawStockTable(table, dt) {
             const rowCount = table.rows.length;
 
             for (let i = rowCount - 1; i > 0; i--) {
                 table.deleteRow(i);
             }
 
-            console.log(data)
-            keys = Object.keys(data);
-            console.log('drawStockTable', keys)
-            for (var i = 0; i < keys.length; i++) {
+            // console.log(dt)
+            const keys1 = Object.keys(dt);
+            console.log('drawStockTable', keys1)
+            for (var i = 0; i < keys1.length; i++) {
                 const idx = i;
-                console.log('calcprofit', keys[idx])
+                // console.log('calcprofit', keys[idx])
                 var row = table.insertRow();
-                keys2 = Object.keys(data[keys[idx]]);
+                console.log(dt)
+                console.log(keys1)
+                console.log(dt[keys1[i]])
+                keys2 = Object.keys(dt[keys1[idx]]);
+                console.log(keys2)
                 for (var j = 0; j < keys2.length; j++) {
                     var cell = row.insertCell();
-                    cell.textContent = data[keys[idx]][keys2[j]];
+                    cell.textContent = dt[keys1[idx]][keys2[j]];
                 }
+
+                console.log(keys1)
 
                 var cell = row.insertCell();
                 var price_now;
                 // console.log('inventory: ', data[keys[idx]]['stock_code']);
-                // console.log('calcprofit', keys[idx])
-                await fetch('http://localhost:3000/api/getFilledOrders', {
+                console.log('calcprofit', dt[keys1[idx]]['stock_code'])
+                await fetch('http://localhost:3000/api/getStocks', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        ID: sessionStorage.getItem("ID"),
-                        stockCode: data[keys[idx]]['stock_code'],
-                        get_latest: true
+                        stockCode: dt[keys1[idx]]['stock_code'],
                     })
                 })
                 .then(res => res.json())
-                .then(dt => {
-                    
-                    price_now = parseFloat(dt['data'][keys[idx]]['trade_price']);
-                    // console.log(price_now);
+                .then(data => {
+
+                    // console.log('calcprofit3 ', data[keys[idx]]['stock_code'])
+                    // console.log('calcprofit3 ', dt['data'], keys[idx])
+
+                    console.log(data)                  
+                    price_now = parseFloat(data[0]['price']);
+                    console.log(price_now)
+                    // console.log(price_now);  
                     // console.log(data);
                     // console.log('calcprofit2', dt['data'], idx, keys[idx]);
                 })
-                // console.log(price_now, data[keys[idx]]['price_bought'])
-                cell.textContent = `${Math.round((price_now/parseFloat(data[keys[idx]]['price_bought'])-1)*10000)/100}%`;
+                console.log(price_now, dt[keys1[idx]]['price_bought'])
+                cell.textContent = `${Math.round((price_now/parseFloat(dt[keys1[idx]]['price_bought'])-1)*10000)/100}%`;
             }
         }
 
@@ -301,11 +322,17 @@
                 keys2 = Object.keys(data[keys[i]]);
                 for (var j = 0; j < keys2.length; j++) {
                     var cell = row.insertCell();
-                    cell.textContent = data[keys[i]][keys2[j]];
+                    if (keys2[j] === 'trade_unix_time')
+                    {
+                        // console.log(data[keys[i]][keys2[j]])
+                        cell.textContent = new Date(data[keys[i]][keys2[j]]).toLocaleString();
+                    }
+                    else cell.textContent = data[keys[i]][keys2[j]];
                 }
                 var cell = row.insertCell();
                 // console.log(data[keys[i]]['trade_id']);
-                cell.innerHTML = `<button id=${data[keys[i]]['trade_id']} onclick="cancelOrder()">Cancel order</button>`
+                if (!data[0] === 'No result')
+                    cell.innerHTML = `<button id=${data[keys[i]]['trade_id']} onclick="cancelOrder()">Cancel order</button>`
             }
         }
 
@@ -346,10 +373,7 @@
             .then(res => res.json())
             .then(data => {
                 
-                if (data['result'] === false)
-                {
-                    console.log('No balance');
-                }
+                if (data['result'] === false) data['data'] = [{log: "No result"}]
                 console.log('Balance data:');
                 console.log(data['data']);
                 balance = data['data'];
@@ -367,10 +391,7 @@
             .then(res => res.json())
             .then(data => {
                 
-                if (data['result'] === false)
-                {
-                    console.log('No orders');
-                }
+                if (data['result'] === false) data['data'] = [{log: "No result"}]
                 console.log('Unfilled orders data:');
                 console.log(data['data']);
                 orders_unfilled = data['data'];
@@ -390,10 +411,7 @@
             .then(res => res.json())
             .then(data => {
                 
-                if (data['result'] === false)
-                {
-                    console.log('No orders');
-                }
+                if (data['result'] === false) data['data'] = [{log: "No result"}]
                 // console.log('Filled orders data:');
                 // console.log(data['data']);
                 orders_filled = data['data'];

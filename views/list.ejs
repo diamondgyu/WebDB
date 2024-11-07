@@ -60,7 +60,7 @@
             color: red;
         }
         .negative {
-            color: blue;
+            color: #0185DE;
         }
         #mypage {
             /* float: right; */
@@ -135,21 +135,22 @@
         <td><button class="button" onclick="window.location='/myPage'">My Page</button></td>    
     </tr>
 </table>
+<p>Filter with name:</p><input type="text" id="filterInput"></input>
+
 <div class="tab" margin-bottom="20px">
     <button class="tablinks" onclick="openTab(event, 'VolumeTab')" id="VButton">Volume</button>
     <button class="tablinks" onclick="openTab(event, 'MarketCapTab')" id="MCButton">Market Cap</button>
     <button class="tablinks" onclick="openTab(event, 'GainTab')" id="GainButton">Gain</button>
 </div>
-
 <table>
     
 </table>
-
   <div id="VolumeTab" class="tabcontent">
     <table id="Volume">
         <thead>
             <th>Code</th>
             <th>Name</th>
+            <th>Price</th>
             <th>Gain(24h)</th>
             <th>Volume(24h)</th>
             <th>Market Cap</th>
@@ -164,6 +165,7 @@
         <thead>
             <th>Code</th>
             <th>Name</th>
+            <th>Price</th>
             <th>Gain(24h)</th>
             <th>Volume(24h)</th>
             <th>Market Cap</th>
@@ -178,6 +180,7 @@
         <thead>
             <th>Code</th>
             <th>Name</th>
+            <th>Price</th>
             <th>Gain(24h)</th>
             <th>Volume(24h)</th>
             <th>Market Cap</th>
@@ -206,6 +209,12 @@
         
 
         function openTab(evt, tabName) {
+
+            // remove columns in volumes, market caps, gains tables
+            // document.getElementById("Volume").innerHTML = "";
+            // document.getElementById("MarketCap").innerHTML = "";
+            // document.getElementById("Gain").innerHTML = "";
+
             // Declare all variables
             var i, tabcontent, tablinks;
 
@@ -224,22 +233,32 @@
             // Show the current tab, and add an "active" class to the button that opened the tab
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+            stockCode = document.getElementById("filterInput").value;
+            console.log(stockCode);
+            if (stockCode === undefined) stockCode = "";
+
+            console.log(stockCode);
 
             // send request to get all stock informations and save it to session
             fetch('http://localhost:3000/api/getStocks', {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                body: JSON.stringify({
+                    stockCode: stockCode
+                })
             })
             .then(res => res.json())
             .then(data => {
                 // console.log(data);
                 // const stocks = JSON.parse(data);
+                if (data['result'] === false) data['data'] = [{log: "No result"}]
+
                 stocks = data;
 
                 if (tabName == "VolumeTab") stocks.sort((a, b) => b.volume_24h - a.volume_24h);
-                else if (tabName == "MarketCapTab") stocks.sort((a, b) => b.market_cap - a.marketCap);
+                else if (tabName == "MarketCapTab") stocks.sort((a, b) => b.stocks_total*b.price - a.stocks_total*a.price);
                 else if (tabName == "GainTab") stocks.sort((a, b) => b.gain_24h - a.gain_24h);
                 
                 console.log(tabName);
@@ -247,7 +266,7 @@
                 else if (tabName == "MarketCapTab") var tb=document.getElementById("MarketCap");
                 else if (tabName == "GainTab") var tb=document.getElementById("Gain");
                 else console.log("error");
-                console.log(typeof tb)
+                // console.log(typeof tb)
 
                 while (tb.rows.length > 1) {
                     tb.deleteRow(1);
@@ -262,7 +281,7 @@
                 }
 
                 for (let i = 0; i < stocks.length; i++) {
-                    console.log(stocks[i].code)
+                    // console.log(stocks[i].code)
                     let row = tb.insertRow(-1);
                     row.className="stock-row";
                     let cell1 = row.insertCell(0);
@@ -270,12 +289,15 @@
                     let cell3 = row.insertCell(2);
                     let cell4 = row.insertCell(3);
                     let cell5 = row.insertCell(4);
+                    let cell6 = row.insertCell(5);
                     cell1.textContent = stocks[i].code;
                     cell2.textContent = stocks[i].stock_name;
-                    cell3.textContent = stocks[i].gain_24h;
-                    stocks[i].gain_24h ? cell3.className="positive" : cell3.className="negative";
-                    cell4.textContent = stocks[i].volume_24h;
-                    cell5.textContent = stocks[i].market_cap;
+                    cell3.textContent = stocks[i].price;
+                    cell4.textContent = stocks[i].gain_24h+"%";
+                    console.log(parseFloat(stocks[i].gain_24h))
+                    parseFloat(stocks[i].gain_24h)>0 ? cell4.className="positive" : cell4.className="negative";
+                    cell5.textContent = stocks[i].volume_24h;
+                    cell6.textContent = Math.round(stocks[i].stocks_total*stocks[i]['price']);
                     row.onclick = rowClickHandler(row);
                     tb.style.cursor = "pointer";
                 }
